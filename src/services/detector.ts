@@ -1,6 +1,7 @@
 import { HLSSegment, HLSSource } from '../core/types.js';
 import { extractBaseUrl, extractSegmentNumber, extractFileName, isHLSSegment, normalizeUrl } from '../core/utils.js';
 import { getSources, saveSource } from './storage.js';
+import { getMetadataFromActiveTab } from './metadata-extractor.js';
 
 function compareSegments(a: HLSSegment, b: HLSSegment): number {
   const numA = extractSegmentNumber(a.url);
@@ -57,10 +58,13 @@ export async function detectHLSSegment(
     return existingSource;
   }
 
+  const metadata = await getMetadataFromActiveTab();
+  
   const newSource: HLSSource = {
     baseUrl,
     segments: [segment],
     detectedAt: Date.now(),
+    metadata,
   };
 
   await saveSource(newSource);

@@ -8,5 +8,11 @@ export interface HLSSource {
   baseUrl: string;
   segments: HLSSegment[];
   detectedAt: number;
+  metadata?: {
+    title: string;
+    imageUrl: string | null;
+    year: string | null;
+  };
+  totalSegments?: number;
 }
 

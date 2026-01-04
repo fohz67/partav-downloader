@@ -6,7 +6,9 @@
   "permissions": [
     "storage",
     "downloads",
-    "webRequest"
+    "webRequest",
+    "scripting",
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"

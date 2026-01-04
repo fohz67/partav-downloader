@@ -1,7 +1,7 @@
 import { HLSSource } from '../core/types.js';
-import { downloadViaChromeAPI } from '../services/download-manager.js';
+import { downloadCompleteVideo } from '../services/download/manager.js';
 import { getSources, clearSources } from '../services/storage.js';
-import { FetchProgress } from '../services/segment-fetcher.js';
+import { FetchProgress } from '../services/segment/fetcher.js';
 
 const sourcesListEl = document.getElementById('sourcesList')!;
 const clearBtn = document.getElementById('clearBtn')!;
@@ -25,31 +25,43 @@ function createSourceElement(source: HLSSource): HTMLElement {
   
   const segmentsCount = source.segments.length;
   const baseFileName = formatUrl(source.baseUrl);
+  const title = source.metadata?.title || baseFileName;
+  const imageUrl = source.metadata?.imageUrl;
+  const year = source.metadata?.year;
+  const displayTitle = year ? `${title} (${year})` : title;
   
   div.innerHTML = `
+    ${imageUrl ? `<div class="source-image"><img src="${imageUrl}" alt="${title}" /></div>` : ''}
     <div class="source-header">
-      <div class="source-url" title="${source.baseUrl}">${baseFileName}</div>
+      <div class="source-title" title="${source.baseUrl}">${displayTitle}</div>
     </div>
     <div class="source-meta">
       ${segmentsCount} segment${segmentsCount > 1 ? 's' : ''} detected • ${formatDate(source.detectedAt)}
+      ${source.totalSegments ? ` • ${source.totalSegments} total` : ''}
     </div>
     <div class="source-actions">
       <button class="btn-primary download-btn" data-base-url="${source.baseUrl}">
-        Download
+        Download All
       </button>
     </div>
     <div class="progress-bar">
       <div class="progress-fill"></div>
+      <div class="progress-text">0%</div>
     </div>
   `;
   
   const downloadBtn = div.querySelector('.download-btn') as HTMLButtonElement;
   const progressBar = div.querySelector('.progress-bar') as HTMLElement;
   const progressFill = div.querySelector('.progress-fill') as HTMLElement;
+  const progressText = div.querySelector('.progress-text') as HTMLElement;
   
   const progressListener = (message: any) => {
     if (message.type === 'DOWNLOAD_PROGRESS') {
-      progressFill.style.width = `${message.progress}%`;
+      const progress = Math.round(message.progress);
+      progressFill.style.width = `${progress}%`;
+      if (progressText) {
+        progressText.textContent = `${progress}% (${message.current}/${message.total})`;
+      }
     }
   };
 
@@ -57,6 +69,9 @@ function createSourceElement(source: HLSSource): HTMLElement {
     downloadBtn.disabled = true;
     progressBar.classList.add('active');
     progressFill.style.width = '0%';
+    if (progressText) {
+      progressText.textContent = 'Finding segments...';
+    }
     
     chrome.runtime.onMessage.addListener(progressListener);
     
@@ -68,7 +83,7 @@ function createSourceElement(source: HLSSource): HTMLElement {
     };
     
     try {
-      await downloadViaChromeAPI(source, onProgress);
+      await downloadCompleteVideo(source, onProgress);
       
       setTimeout(() => {
         progressBar.classList.remove('active');
@@ -77,7 +92,7 @@ function createSourceElement(source: HLSSource): HTMLElement {
       }, 1000);
     } catch (error) {
       console.error('Download error:', error);
-      alert('Error during download');
+      alert(`Error during download: ${error instanceof Error ? error.message : 'Unknown error'}`);
       downloadBtn.disabled = false;
       progressBar.classList.remove('active');
       chrome.runtime.onMessage.removeListener(progressListener);
