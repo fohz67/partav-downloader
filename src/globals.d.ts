@@ -1,2 +1,1 @@
-declare const chrome: typeof import('chrome');
-
+declare const chrome: typeof import("chrome");

@@ -14,7 +14,7 @@ export function extractFileName(url: string): string | null {
 }
 
 export function isHLSSegment(url: string): boolean {
-  return url.endsWith('.ts') && url.includes('/');
+  return url.endsWith(".ts") && url.includes("/");
 }
 
 export function normalizeUrl(url: string): string {
@@ -27,7 +27,6 @@ export function normalizeUrl(url: string): string {
 
 export function getFileNameFromUrl(url: string): string {
   const urlObj = new URL(url);
-  const fileName = urlObj.pathname.split('/').pop() || 'video';
-  return fileName.replace(/\.ts$/, '');
+  const fileName = urlObj.pathname.split("/").pop() || "video";
+  return fileName.replace(/\.ts$/, "");
 }
-

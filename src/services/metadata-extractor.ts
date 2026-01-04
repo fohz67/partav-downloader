@@ -6,31 +6,31 @@ export interface MovieMetadata {
 
 export function extractMetadataFromPage(): MovieMetadata {
   const metadata: MovieMetadata = {
-    title: 'Unknown',
+    title: "Unknown",
     imageUrl: null,
     year: null,
   };
 
   const titleSelectors = [
     'b[style*="color:#818181"]',
-    '.trend_title',
-    'h1',
-    'title',
+    ".trend_title",
+    "h1",
+    "title",
   ];
 
   for (const selector of titleSelectors) {
     const element = document.querySelector(selector);
     if (element) {
-      let text = element.textContent?.trim() || '';
-      text = text.replace(/\s*\((\d{4})\)\s*.*$/, ' ($1)');
+      let text = element.textContent?.trim() || "";
+      text = text.replace(/\s*\((\d{4})\)\s*.*$/, " ($1)");
       const yearMatch = text.match(/\((\d{4})\)/);
       if (yearMatch) {
         metadata.year = yearMatch[1];
-        metadata.title = text.replace(/\s*\(\d{4}\).*$/, '').trim();
+        metadata.title = text.replace(/\s*\(\d{4}\).*$/, "").trim();
       } else {
         metadata.title = text;
       }
-      if (metadata.title && metadata.title !== 'Unknown') {
+      if (metadata.title && metadata.title !== "Unknown") {
         break;
       }
     }
@@ -40,12 +40,12 @@ export function extractMetadataFromPage(): MovieMetadata {
     'img[src*="themoviedb"]',
     'img[src*="poster"]',
     'img[width="100%"]',
-    'img',
+    "img",
   ];
 
   for (const selector of imgSelectors) {
     const img = document.querySelector(selector) as HTMLImageElement;
-    if (img?.src && img.src.startsWith('http')) {
+    if (img?.src && img.src.startsWith("http")) {
       metadata.imageUrl = img.src;
       break;
     }
@@ -67,14 +67,13 @@ export async function getMetadataFromActiveTab(): Promise<MovieMetadata> {
             if (results?.[0]?.result) {
               resolve(results[0].result);
             } else {
-              resolve({ title: 'Unknown', imageUrl: null, year: null });
+              resolve({ title: "Unknown", imageUrl: null, year: null });
             }
-          }
+          },
         );
       } else {
-        resolve({ title: 'Unknown', imageUrl: null, year: null });
+        resolve({ title: "Unknown", imageUrl: null, year: null });
       }
     });
   });
 }
-

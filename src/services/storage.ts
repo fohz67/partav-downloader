@@ -1,6 +1,6 @@
-import { HLSSource } from '../core/types.js';
+import { HLSSource } from "../core/types.js";
 
-const STORAGE_KEY = 'hls_sources';
+const STORAGE_KEY = "hls_sources";
 
 export async function getSources(): Promise<HLSSource[]> {
   const result = await chrome.storage.local.get(STORAGE_KEY);
@@ -9,14 +9,14 @@ export async function getSources(): Promise<HLSSource[]> {
 
 export async function saveSource(source: HLSSource): Promise<void> {
   const sources = await getSources();
-  const existingIndex = sources.findIndex(s => s.baseUrl === source.baseUrl);
-  
+  const existingIndex = sources.findIndex((s) => s.baseUrl === source.baseUrl);
+
   if (existingIndex >= 0) {
     sources[existingIndex] = source;
   } else {
     sources.push(source);
   }
-  
+
   await chrome.storage.local.set({ [STORAGE_KEY]: sources });
 }
 
@@ -26,7 +26,6 @@ export async function clearSources(): Promise<void> {
 
 export async function removeSource(baseUrl: string): Promise<void> {
   const sources = await getSources();
-  const filtered = sources.filter(s => s.baseUrl !== baseUrl);
+  const filtered = sources.filter((s) => s.baseUrl !== baseUrl);
   await chrome.storage.local.set({ [STORAGE_KEY]: filtered });
 }
-

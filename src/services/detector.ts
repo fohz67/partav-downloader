@@ -1,32 +1,38 @@
-import { HLSSegment, HLSSource } from '../core/types.js';
-import { extractBaseUrl, extractSegmentNumber, extractFileName, isHLSSegment, normalizeUrl } from '../core/utils.js';
-import { getSources, saveSource } from './storage.js';
-import { getMetadataFromActiveTab } from './metadata-extractor.js';
+import { HLSSegment, HLSSource } from "../core/types.js";
+import {
+  extractBaseUrl,
+  extractSegmentNumber,
+  extractFileName,
+  isHLSSegment,
+  normalizeUrl,
+} from "../core/utils.js";
+import { getSources, saveSource } from "./storage.js";
+import { getMetadataFromActiveTab } from "./metadata-extractor.js";
 
 function compareSegments(a: HLSSegment, b: HLSSegment): number {
   const numA = extractSegmentNumber(a.url);
   const numB = extractSegmentNumber(b.url);
-  
+
   if (numA !== null && numB !== null) {
     return numA - numB;
   }
-  
-  const fileNameA = extractFileName(a.url) || '';
-  const fileNameB = extractFileName(b.url) || '';
-  
+
+  const fileNameA = extractFileName(a.url) || "";
+  const fileNameB = extractFileName(b.url) || "";
+
   if (fileNameA && fileNameB) {
     return fileNameA.localeCompare(fileNameB);
   }
-  
+
   return a.timestamp - b.timestamp;
 }
 
 export async function detectHLSSegment(
   url: string,
-  tabId: number
+  tabId: number,
 ): Promise<HLSSource | null> {
   const normalizedUrl = normalizeUrl(url);
-  
+
   if (!isHLSSegment(normalizedUrl)) {
     return null;
   }
@@ -43,13 +49,13 @@ export async function detectHLSSegment(
   };
 
   const existingSources = await getSources();
-  const existingSource = existingSources.find(s => s.baseUrl === baseUrl);
+  const existingSource = existingSources.find((s) => s.baseUrl === baseUrl);
 
   if (existingSource) {
     const existingSegment = existingSource.segments.find(
-      s => s.url === normalizedUrl
+      (s) => s.url === normalizedUrl,
     );
-    
+
     if (!existingSegment) {
       existingSource.segments.push(segment);
       existingSource.segments.sort(compareSegments);
@@ -59,7 +65,7 @@ export async function detectHLSSegment(
   }
 
   const metadata = await getMetadataFromActiveTab();
-  
+
   const newSource: HLSSource = {
     baseUrl,
     segments: [segment],
@@ -70,4 +76,3 @@ export async function detectHLSSegment(
   await saveSource(newSource);
   return newSource;
 }
-

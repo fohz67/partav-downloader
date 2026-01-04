@@ -1,5 +1,5 @@
-import { detectHLSSegment } from '../services/detector.js';
-import { getSources, clearSources } from '../services/storage.js';
+import { detectHLSSegment } from "../services/detector.js";
+import { getSources, clearSources } from "../services/storage.js";
 
 chrome.webRequest.onBeforeRequest.addListener(
   (details: any) => {
@@ -8,24 +8,25 @@ chrome.webRequest.onBeforeRequest.addListener(
     }
   },
   {
-    urls: ['<all_urls>'],
+    urls: ["<all_urls>"],
   },
-  []
+  [],
 );
 
-chrome.runtime.onMessage.addListener((message: any, sender: any, sendResponse: any) => {
-  if (message.type === 'GET_SOURCES') {
-    getSources().then(sources => sendResponse(sources));
-    return true;
-  }
-  
-  if (message.type === 'CLEAR_SOURCES') {
-    clearSources().then(() => sendResponse({ success: true }));
-    return true;
-  }
-  
-  if (message.type === 'DOWNLOAD_PROGRESS') {
-    chrome.runtime.sendMessage(message);
-  }
-});
+chrome.runtime.onMessage.addListener(
+  (message: any, sender: any, sendResponse: any) => {
+    if (message.type === "GET_SOURCES") {
+      getSources().then((sources) => sendResponse(sources));
+      return true;
+    }
 
+    if (message.type === "CLEAR_SOURCES") {
+      clearSources().then(() => sendResponse({ success: true }));
+      return true;
+    }
+
+    if (message.type === "DOWNLOAD_PROGRESS") {
+      chrome.runtime.sendMessage(message);
+    }
+  },
+);
