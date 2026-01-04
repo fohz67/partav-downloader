@@ -2,6 +2,7 @@ import { getSources } from "../services/storage.js";
 import { getActiveDownloads } from "../services/download/persistence.js";
 import { updateProgressBar } from "./progress.js";
 import { setDownloadingState } from "./ui-state.js";
+import { createProgressListener } from "./progress.js";
 
 export async function restoreDownloadProgress(
   container: HTMLElement,
@@ -59,4 +60,18 @@ function restoreElementProgress(
   );
   setDownloadingState(downloadBtn, progressBar, true);
   activeDownloads.add(download.sourceId);
+
+  const progressListener = createProgressListener(progressFill, progressText);
+  chrome.runtime.onMessage.addListener(progressListener);
+
+  const completeListener = (message: any) => {
+    if (message.type === "DOWNLOAD_COMPLETE" && message.sourceId === download.sourceId) {
+      setDownloadingState(downloadBtn, progressBar, false);
+      activeDownloads.delete(download.sourceId);
+      chrome.runtime.onMessage.removeListener(completeListener);
+      chrome.runtime.onMessage.removeListener(progressListener);
+    }
+  };
+
+  chrome.runtime.onMessage.addListener(completeListener);
 }

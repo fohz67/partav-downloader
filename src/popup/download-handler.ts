@@ -1,10 +1,8 @@
 import { HLSSource } from "../core/types.js";
-import { FetchProgress } from "../services/segment/fetcher.js";
-import { downloadCompleteVideo } from "../services/download/manager.js";
-import { removeActiveDownload } from "../services/download/persistence.js";
-import { isDownloadInProgress } from "../services/download/state.js";
 import { createProgressListener, updateProgressBar } from "./progress.js";
 import { setDownloadingState, cleanupDownload } from "./ui-state.js";
+import { removeActiveDownload } from "../services/download/persistence.js";
+import { isDownloadInProgress } from "../services/download/state.js";
 
 export function setupDownloadButton(
   source: HLSSource,
@@ -50,52 +48,50 @@ function startDownload(
   const progressListener = createProgressListener(progressFill, progressText);
   chrome.runtime.onMessage.addListener(progressListener);
 
-  const onProgress = (progress: FetchProgress) => {
-    chrome.runtime.sendMessage({
-      type: "DOWNLOAD_PROGRESS",
-      ...progress,
-    });
+  chrome.runtime.sendMessage(
+    {
+      type: "START_DOWNLOAD",
+      source,
+      sourceId,
+    },
+    (response) => {
+      if (chrome.runtime.lastError) {
+        handleDownloadError(
+          new Error(chrome.runtime.lastError.message),
+          downloadBtn,
+          progressBar,
+          progressListener,
+          sourceId,
+          activeDownloads,
+        );
+      }
+    }
+  );
+
+  const errorListener = (message: any) => {
+    if (message.type === "DOWNLOAD_ERROR" && message.sourceId === sourceId) {
+      handleDownloadError(
+        new Error(message.error),
+        downloadBtn,
+        progressBar,
+        progressListener,
+        sourceId,
+        activeDownloads,
+      );
+      chrome.runtime.onMessage.removeListener(errorListener);
+    } else if (message.type === "DOWNLOAD_COMPLETE" && message.sourceId === sourceId) {
+      handleDownloadSuccess(
+        progressBar,
+        downloadBtn,
+        progressListener,
+        sourceId,
+        activeDownloads,
+      );
+      chrome.runtime.onMessage.removeListener(errorListener);
+    }
   };
 
-  executeDownload(
-    source,
-    sourceId,
-    onProgress,
-    progressListener,
-    downloadBtn,
-    progressBar,
-    activeDownloads,
-  );
-}
-
-async function executeDownload(
-  source: HLSSource,
-  sourceId: string,
-  onProgress: (progress: FetchProgress) => void,
-  progressListener: (message: any) => void,
-  downloadBtn: HTMLButtonElement,
-  progressBar: HTMLElement,
-  activeDownloads: Set<string>,
-): Promise<void> {
-  try {
-    await downloadCompleteVideo(source, onProgress, sourceId);
-    handleDownloadSuccess(
-      progressBar,
-      downloadBtn,
-      progressListener,
-      sourceId,
-      activeDownloads,
-    );
-  } catch (error) {
-    handleDownloadError(
-      error,
-      downloadBtn,
-      progressBar,
-      progressListener,
-      sourceId,
-      activeDownloads,
-    );
-  }
+  chrome.runtime.onMessage.addListener(errorListener);
 }
 
 function handleDownloadSuccess(
