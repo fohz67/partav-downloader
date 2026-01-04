@@ -1,13 +1,8 @@
 import { HLSSource } from "../core/types.js";
-import { isDownloadInProgress } from "../services/download/state.js";
 import { createSourceElement } from "./element.js";
 import { setupDownloadButton } from "./download-handler.js";
 
 export function renderEmptyState(container: HTMLElement): void {
-  if (isDownloadInProgress()) {
-    return;
-  }
-
   container.innerHTML = `
     <div class="empty-state">
       <p>Monitoring active...</p>
@@ -21,10 +16,6 @@ export function renderSources(
   container: HTMLElement,
   activeDownloads: Set<string>,
 ): void {
-  if (isDownloadInProgress()) {
-    return;
-  }
-
   container.innerHTML = "";
 
   sources.forEach((source) => {

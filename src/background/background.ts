@@ -1,5 +1,5 @@
 import { detectHLSSegment } from "../services/detector.js";
-import { startDownload } from "./download-handler.js";
+import { startDownload, cancelAllDownloads } from "./download-handler.js";
 import { getSources } from "../services/storage.js";
 import { HLSSource } from "../core/types.js";
 import { FetchProgress } from "../services/segment/fetcher.js";
@@ -41,6 +41,12 @@ chrome.runtime.onMessage.addListener(
         });
       });
 
+      sendResponse({ success: true });
+      return true;
+    }
+
+    if (message.type === "PURGE_ALL") {
+      cancelAllDownloads();
       sendResponse({ success: true });
       return true;
     }

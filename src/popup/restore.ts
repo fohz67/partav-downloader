@@ -70,6 +70,11 @@ function restoreElementProgress(
       activeDownloads.delete(download.sourceId);
       chrome.runtime.onMessage.removeListener(completeListener);
       chrome.runtime.onMessage.removeListener(progressListener);
+    } else if (message.type === "DOWNLOAD_ERROR" && message.sourceId === download.sourceId) {
+      setDownloadingState(downloadBtn, progressBar, false);
+      activeDownloads.delete(download.sourceId);
+      chrome.runtime.onMessage.removeListener(completeListener);
+      chrome.runtime.onMessage.removeListener(progressListener);
     }
   };
 

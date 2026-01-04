@@ -2,7 +2,6 @@ import { HLSSource } from "../core/types.js";
 import { createProgressListener, updateProgressBar } from "./progress.js";
 import { setDownloadingState, cleanupDownload } from "./ui-state.js";
 import { removeActiveDownload } from "../services/download/persistence.js";
-import { isDownloadInProgress } from "../services/download/state.js";
 
 export function setupDownloadButton(
   source: HLSSource,
@@ -14,8 +13,8 @@ export function setupDownloadButton(
 ): void {
   const sourceId = source.baseUrl;
 
-  downloadBtn.addEventListener("click", async () => {
-    if (activeDownloads.has(sourceId) || isDownloadInProgress()) {
+  downloadBtn.addEventListener("click", () => {
+    if (activeDownloads.has(sourceId)) {
       return;
     }
 
@@ -48,6 +47,33 @@ function startDownload(
   const progressListener = createProgressListener(progressFill, progressText);
   chrome.runtime.onMessage.addListener(progressListener);
 
+  const errorListener = (message: any) => {
+    if (message.type === "DOWNLOAD_ERROR" && message.sourceId === sourceId) {
+      handleDownloadError(
+        new Error(message.error),
+        downloadBtn,
+        progressBar,
+        progressListener,
+        sourceId,
+        activeDownloads,
+      );
+      chrome.runtime.onMessage.removeListener(errorListener);
+      chrome.runtime.onMessage.removeListener(progressListener);
+    } else if (message.type === "DOWNLOAD_COMPLETE" && message.sourceId === sourceId) {
+      handleDownloadSuccess(
+        progressBar,
+        downloadBtn,
+        progressListener,
+        sourceId,
+        activeDownloads,
+      );
+      chrome.runtime.onMessage.removeListener(errorListener);
+      chrome.runtime.onMessage.removeListener(progressListener);
+    }
+  };
+
+  chrome.runtime.onMessage.addListener(errorListener);
+
   chrome.runtime.sendMessage(
     {
       type: "START_DOWNLOAD",
@@ -64,34 +90,11 @@ function startDownload(
           sourceId,
           activeDownloads,
         );
+        chrome.runtime.onMessage.removeListener(errorListener);
+        chrome.runtime.onMessage.removeListener(progressListener);
       }
     }
   );
-
-  const errorListener = (message: any) => {
-    if (message.type === "DOWNLOAD_ERROR" && message.sourceId === sourceId) {
-      handleDownloadError(
-        new Error(message.error),
-        downloadBtn,
-        progressBar,
-        progressListener,
-        sourceId,
-        activeDownloads,
-      );
-      chrome.runtime.onMessage.removeListener(errorListener);
-    } else if (message.type === "DOWNLOAD_COMPLETE" && message.sourceId === sourceId) {
-      handleDownloadSuccess(
-        progressBar,
-        downloadBtn,
-        progressListener,
-        sourceId,
-        activeDownloads,
-      );
-      chrome.runtime.onMessage.removeListener(errorListener);
-    }
-  };
-
-  chrome.runtime.onMessage.addListener(errorListener);
 }
 
 function handleDownloadSuccess(

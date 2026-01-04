@@ -28,7 +28,7 @@ export async function startDownload(
 
     await downloadCompleteVideo(source, onProgress, sourceId);
     await removeActiveDownload(sourceId);
-    
+
     chrome.runtime.sendMessage({
       type: "DOWNLOAD_COMPLETE",
       sourceId,
@@ -44,3 +44,6 @@ export function isDownloadActive(sourceId: string): boolean {
   return activeDownloadId === sourceId;
 }
 
+export function cancelAllDownloads(): void {
+  activeDownloadId = null;
+}

@@ -48,6 +48,23 @@ h1 {
   border-color: #444;
 }
 
+.btn-purge {
+  padding: 6px 12px;
+  background: transparent;
+  color: #ff4444;
+  border: 1px solid #ff4444;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-purge:hover {
+  background: #ff4444;
+  color: #fff;
+}
+
 .sources-list {
   display: flex;
   flex-direction: column;
